@@ -27,6 +27,27 @@
         </div>
       </div>
 
+      <div v-if="restockingOrders.length > 0" class="card submitted-orders-section">
+        <div class="card-header">
+          <h3 class="card-title">Submitted Orders ({{ restockingOrders.length }})</h3>
+          <p class="card-subtitle">Restocking orders placed from the Restocking tab</p>
+        </div>
+        <div class="restocking-order-grid">
+          <div v-for="ro in restockingOrders" :key="ro.id" class="restocking-order-card">
+            <div class="ro-header">
+              <strong class="ro-number">{{ ro.order_number }}</strong>
+              <span class="status-badge status-submitted">Submitted</span>
+            </div>
+            <div class="ro-meta">
+              <span>{{ ro.items.length }} item(s)</span>
+              <span class="ro-value">${{ ro.total_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+            </div>
+            <div class="ro-detail">Est. delivery: {{ ro.estimated_delivery }}</div>
+            <div class="ro-detail ro-date">Submitted: {{ new Date(ro.submitted_date).toLocaleDateString() }}</div>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">{{ t('orders.allOrders') }} ({{ orders.length }})</h3>
@@ -95,6 +116,7 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const orders = ref([])
+    const restockingOrders = ref([])
 
     // Use shared filters
     const {
@@ -121,6 +143,12 @@ export default {
         error.value = 'Failed to load orders: ' + err.message
       } finally {
         loading.value = false
+      }
+
+      try {
+        restockingOrders.value = await api.getRestockingOrders()
+      } catch (err) {
+        console.error('Failed to load restocking orders:', err)
       }
     }
 
@@ -160,6 +188,7 @@ export default {
       loading,
       error,
       orders,
+      restockingOrders,
       getOrdersByStatus,
       getOrderStatusClass,
       formatDate,
@@ -275,5 +304,69 @@ export default {
 .item-meta {
   font-size: 0.813rem;
   color: #64748b;
+}
+
+.submitted-orders-section {
+  margin-bottom: 1.5rem;
+}
+
+.submitted-orders-section .card-subtitle {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+.restocking-order-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.restocking-order-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+}
+
+.ro-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.ro-number {
+  font-size: 0.9rem;
+  color: #e2e8f0;
+}
+
+.status-submitted {
+  background: #1d3461;
+  color: #93c5fd;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.ro-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin-bottom: 0.35rem;
+}
+
+.ro-value {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.ro-detail {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 0.2rem;
 }
 </style>
